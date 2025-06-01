@@ -1,0 +1,4 @@
+.bin/
+*.enc
+*.exe
+*.log

@@ -1,0 +1,38 @@
+- name: Gather facts
+  hosts: lab-vm-774e5d
+  tasks:
+    - set_fact:
+        k3s_cluster_context_name: "lab-vm-774e5d-k3s-ansible"
+
+- name: Install k3s server
+  hosts: lab-vm-774e5d
+  vars_files:
+    - global.yml.enc
+  roles:
+    - role: k3s.orchestration.k3s_server
+      become: true
+      vars:
+        k3s_version: "v1.33.1+k3s1"
+        token: "{{ k3s.token }}"
+        api_endpoint: "{{ ansible_host }}"
+        cluster_context: "{{ k3s_cluster_context_name }}"
+
+- name: Setup tailscale operator
+  hosts: localhost
+  vars_files:
+    - global.yml.enc
+  tasks:
+    - kubernetes.core.helm_repository:
+        name: tailscale
+        repo_url: https://pkgs.tailscale.com/helmcharts
+    - kubernetes.core.helm:
+        context: "lab-vm-774e5d-k3s-ansible"
+        chart_ref: tailscale/tailscale-operator
+        chart_version: 1.84.0
+        name: tailscale-operator
+        release_namespace: tailscale
+        create_namespace: true
+        values:
+          oauth:
+            clientId: "{{ tailscale.oauth_client_id }}"
+            clientSecret: "{{ tailscale.oauth_client_secret }}"

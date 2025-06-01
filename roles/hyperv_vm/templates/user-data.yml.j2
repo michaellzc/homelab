@@ -1,0 +1,51 @@
+##cloud-config
+# vim: syntax=yaml
+
+hostname: {{ vm_name }}
+fqdn: {{ vm_name }}.hound-banded.ts.net
+timezone: UTC
+
+growpart:
+  mode: auto
+  devices: [/]
+  ignore_growroot_disabled: false
+
+apt:
+  preserve_sources_list: true
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+packages:
+  - linux-tools-virtual
+  - linux-cloud-tools-virtual
+  - linux-azure"
+  - eject
+  - console-setup
+  - keyboard-configuration
+
+disable_root: false
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJmAIkrkUnlv1OWDy11bLMIHNo3l6mXtePjcqs/i6ZiX mlzc@hey.com
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDcrubE+8YGZKltRIZq4EVSvbWOgn/xnlVVrub0P5AsR mlzc@hey.com
+ssh_pwauth: True # TODO - change to false
+
+power_state:
+  mode: reboot
+  message: Provisioning finished, will reboot
+  timeout: 30
+
+runcmd:
+  # Install docker
+  - apt update -y
+  - apt install -y ca-certificates curl gnupg lsb-release
+  - mkdir -p /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  - |
+    echo "deb [arch=$$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  - apt update -y
+  - apt install -y docker-ce docker-ce-cli containerd.io docker-compose
+  # Install tailscale
+  - 'curl -fsSL https://tailscale.com/install.sh | sh'
+  - echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf && echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf && sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+  - 'sudo tailscale up --auth-key=$TailscaleAuthKey --hostname=$VMName --accept-routes --accept-dns --ssh'

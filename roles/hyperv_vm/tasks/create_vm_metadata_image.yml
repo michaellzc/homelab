@@ -1,0 +1,33 @@
+- name: Write meta-data file
+  ansible.windows.win_template:
+    src: templates/meta-data.yml.j2
+    dest: "{{ cloud_image_metadata_dir }}\\meta-data"
+    force: false
+  vars:
+    instance_id: "{{ vm_name | to_uuid }}"
+
+- name: Write user-data file
+  ansible.windows.win_template:
+    src: templates/user-data.yml.j2
+    dest: "{{ cloud_image_metadata_dir }}\\user-data"
+    force: false
+
+- name: Write network-config file
+  ansible.windows.win_template:
+    src: templates/network-config.yml.j2
+    dest: "{{ cloud_image_metadata_dir }}\\network-config"
+    force: false
+
+- name: Build metadata ISO image
+  ansible.windows.win_powershell:
+    script: |
+      & {
+          $ErrorActionPreference = 'Continue'
+          & '{{ windows_adk_oscdimg_exe_path }}' '{{ cloud_image_metadata_dir }}' '{{ cloud_image_metadata_iso_path }}' -j2 -lCIDATA
+          if ($LASTEXITCODE -gt 0) {
+              throw "oscdimg.exe returned $LASTEXITCODE."
+          }
+      } *> $null
+      $ErrorActionPreference = 'Stop'
+    creates: "{{ cloud_image_metadata_iso_path }}"
+    error_action: stop

@@ -1,0 +1,68 @@
+- name: Check if VM exists
+  ansible.windows.win_powershell:
+    script: |
+      $vmName = "{{ vm_name }}"
+      $vm = Get-VM -Name $vmName -ErrorAction SilentlyContinue
+      if ($null -ne $vm) {
+        $Ansible.Changed = $false
+      } else {
+        $Ansible.Changed = $true
+      }
+    error_action: stop
+  register: check_vm_exists_result
+
+- include_tasks: gather_facts.yml
+  when: check_vm_exists_result is changed
+
+- include_tasks: download_cloud_image.yml
+  when: check_vm_exists_result is changed
+
+- name: Provision VM
+  when: check_vm_exists_result is changed
+  block:
+    - name: Fetch remote VM creation script
+      ansible.windows.win_powershell:
+        script: |
+          param(
+              [string]$RepoUrl,
+              [string]$DestPath
+          )
+          if (Test-Path $DestPath) {
+              Write-Output "Repository exists, updating..."
+              Set-Location $DestPath
+              git reset --hard origin/master
+          } else {
+              Write-Output "Cloning repository..."
+              git clone $RepoUrl $DestPath
+              Set-Location $DestPath
+          }
+        parameters:
+          RepoUrl: "https://github.com/michaellzc/Hyper-V-Automation.git"
+          DestPath: "{{ app_cache_dir }}\\Hyper-V-Automation"
+        error_action: stop
+    - set_fact:
+        hyperv_automation_script_root_path: "{{ app_cache_dir }}\\Hyper-V-Automation"
+
+    - name: Create tailscale oauth key for VM
+      ansible.builtin.shell: |
+        {{ playbook_dir }}/scripts/create_ts_auth_key.sh
+      register: tailscale_auth_key_result
+      no_log: True
+      delegate_to: localhost
+
+    - ansible.windows.win_powershell:
+        script: |
+          Set-Location {{ hyperv_automation_script_root_path }}
+          .\New-VMFromUbuntuImage.ps1 `
+              -SourcePath '{{ cloud_image_iso_path }}' `
+              -VMName '{{ vm_name }}' `
+              -FQDN '{{ vm_name }}.hound-banded.ts.net' `
+              -RootPublicKey '{{ vm_root_public_key }}' `
+              -VHDXSizeBytes {{ vm_boot_disk_size }} `
+              -MemoryStartupBytes {{ vm_startup_memory }} `
+              -EnableDynamicMemory `
+              -ProcessorCount {{ vm_processor_count }} `
+              -SwitchName '{{ vm_switch_name }}' `
+              -InstallDocker `
+              -TailscaleAuthKey '{{ tailscale_auth_key_result.stdout }}'
+        error_action: stop

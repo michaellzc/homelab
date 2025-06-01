@@ -1,0 +1,25 @@
+- name: Compute cache directory
+  set_fact:
+    cloud_image_cache_dir: "{{ ansible_env.ProgramData }}\\ansible-hyperv-vm-cloud-images"
+    app_cache_dir: "{{ ansible_env.ProgramData }}\\ansible-hyperv-vm"
+- name: Compute image path
+  set_fact:
+    cloud_image_checksum_path: "{{ cloud_image_cache_dir }}\\{{ cloud_image_ubuntu_checksum }}"
+    cloud_image_iso_path: "{{ cloud_image_cache_dir }}\\{{ cloud_image_ubuntu_name }}"
+- name: Ensure image cache directory exists
+  ansible.windows.win_file:
+    path: "{{ cloud_image_cache_dir }}"
+    state: directory
+- name: Ensure app cache directory exists
+  ansible.windows.win_file:
+    path: "{{ app_cache_dir }}"
+    state: directory
+
+- name: Compute and ensure metadata directory
+  block:
+    - set_fact:
+        cloud_image_metadata_dir: "{{ cloud_image_cache_dir }}\\{{ vm_name }}-metadata"
+        # cloud_image_metadata_iso_path: "{{ cloud_image_cache_dir }}\\{{ vm_name }}-metadata.iso"
+    - ansible.windows.win_file:
+        path: "{{ cloud_image_metadata_dir }}"
+        state: directory

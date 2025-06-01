@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: Michael Lin
+  description: Ansible role to provision Hyper-V VMs
+  company: Homelab
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Windows
+
+dependencies: []

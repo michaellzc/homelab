@@ -1,0 +1,25 @@
+- name: Prepare Windows servers
+  hosts: win_servers
+  vars:
+    chocolatey_packages:
+      - qemu-img
+      - git
+      - vscode
+      - windows-adk
+  tasks:
+    - name: Install packages from Chocolatey
+      win_chocolatey:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ chocolatey_packages }}"
+
+# Create a new VM
+# use below as vm name
+# echo "lab-vm-$(openssl rand -hex 3)"
+- name: Provision Hyper-V VM on Windows servers
+  hosts: nuc12 # pin to a specific host to avoid weird issues in case clustering is enabled in the future
+  roles:
+    - role: hyperv_vm
+      vars:
+        vm_name: lab-vm-774e5d
+        vm_root_public_key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"

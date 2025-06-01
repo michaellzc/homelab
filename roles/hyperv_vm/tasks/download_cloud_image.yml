@@ -1,0 +1,18 @@
+- name: Download checksum file
+  ansible.windows.win_get_url:
+    url: "{{ cloud_image_ubuntu_base_url }}{{ cloud_image_ubuntu_checksum }}"
+    dest: "{{ cloud_image_checksum_path }}"
+
+- name: Read checksum file
+  ansible.windows.win_shell: |
+    Get-Content "{{ cloud_image_checksum_path }}" | Select-String "{{ cloud_image_ubuntu_name }}" | ForEach-Object { ($_ -split '\s+')[0] }
+  register: checksum_result
+
+- name: Download cloud image
+  ansible.windows.win_get_url:
+    url: "{{ cloud_image_ubuntu_base_url }}{{ cloud_image_ubuntu_name }}"
+    dest: "{{ cloud_image_iso_path }}"
+    # checksum_url does not work due to weird quirks with special characters in the url
+    # probably a windows problem
+    checksum: "{{ checksum_result.stdout }}"
+    checksum_algorithm: sha256

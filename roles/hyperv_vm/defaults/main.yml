@@ -1,0 +1,15 @@
+---
+# Default variables for hyperv_vm role
+
+# Cloud image configuration
+cloud_image_ubuntu_base_url: https://cloud-images.ubuntu.com/releases/noble/release/
+cloud_image_ubuntu_name: ubuntu-24.04-server-cloudimg-amd64.img
+cloud_image_ubuntu_checksum: SHA256SUMS
+
+# VM Basic Configuration
+vm_name: ""
+vm_startup_memory: 512MB
+vm_processor_count: 1
+vm_switch_name: External Virtual Switch
+vm_boot_disk_size: 50GB
+vm_root_public_key: ""
