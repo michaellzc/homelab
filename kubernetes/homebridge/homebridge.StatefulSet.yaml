@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: homebridge
+  namespace: homebridge
+spec:
+  serviceName: homebridge
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homebridge
+  template:
+    metadata:
+      labels:
+        app: homebridge
+    spec:
+      containers:
+      - name: homebridge
+        image: homebridge/homebridge:2025-05-27
+        ports:
+        - containerPort: 8581
+          name: web-ui
+        - containerPort: 51826
+          name: homekit
+        volumeMounts:
+        - name: homebridge-data
+          mountPath: /homebridge
+        env:
+        - name: HOMEBRIDGE_CONFIG_UI
+          value: "1"
+        - name: HOMEBRIDGE_CONFIG_UI_PORT
+          value: "8581"
+        resources: {}
+      hostNetwork: true
+      securityContext:
+        fsGroup: 1000
+  volumeClaimTemplates:
+  - metadata:
+      name: homebridge-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
