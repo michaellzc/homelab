@@ -30,5 +30,9 @@ ansible win_servers -m setup
 ```
 
 ```sh
+ansible-galaxy collection install -r requirements.yml
+```
+
+```sh
 ansible-playbook playbook_win_servers.yml
 ```
