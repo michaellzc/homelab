@@ -1,11 +1,5 @@
-- name: Gather facts
-  hosts: lab-vm-774e5d
-  tasks:
-    - set_fact:
-        k3s_cluster_context_name: "lab-vm-774e5d-k3s-ansible"
-
 - name: Install k3s server
-  hosts: lab-vm-774e5d
+  hosts: server
   vars_files:
     - global.yml.enc
   roles:
@@ -14,19 +8,30 @@
       vars:
         k3s_version: "v1.33.1+k3s1"
         token: "{{ k3s.token }}"
-        api_endpoint: "{{ ansible_host }}"
-        cluster_context: "{{ k3s_cluster_context_name }}"
+        # the hostname of the first server in the cluster is used as the k8s api endpoint
+        api_endpoint: "{{ hostvars[groups['server'][0]].ansible_host }}"
+        # to refresh the cluster context in local kubeconfig
+        # ssh onto the server and delete /etc/rancher/k3s/k3s-copy.yaml
+        # to trigger another copy operation by the role
+        cluster_context: "{{ groups['server'][0] }}-k3s-ansible"
+        user_kubectl: true
 
-- name: Setup tailscale operator
+- name: Setup tailscale operator on k3s cluster
   hosts: localhost
   vars_files:
     - global.yml.enc
   tasks:
-    - kubernetes.core.helm_repository:
+    - name: Update Helm plugin
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/databus23/helm-diff
+        plugin_version: 3.12.1
+    - name: Add tailscale helm repository
+      kubernetes.core.helm_repository:
         name: tailscale
         repo_url: https://pkgs.tailscale.com/helmcharts
-    - kubernetes.core.helm:
-        context: "lab-vm-774e5d-k3s-ansible"
+    - name: Install tailscale-operator
+      kubernetes.core.helm:
+        context: "{{ groups['server'][0] }}-k3s-ansible"
         chart_ref: tailscale/tailscale-operator
         chart_version: 1.84.0
         name: tailscale-operator

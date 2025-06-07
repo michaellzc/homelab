@@ -27,15 +27,15 @@ For common operations, refer to the [handbook](./handbook/).
 
 ## Configuration management
 
-The host OS is Windows Server, RDP is used occasionally to connect to the host in order to apply system updates / security patches, and run PowerShell scripts to provision VMs on Hyper-V. Otherwise, SSH from the MacBook is used for most operations on the VMs. 
+The host OS is Windows Server, RDP is used occasionally to connect to the host in order to apply system updates / security patches, and run PowerShell scripts to provision VMs on Hyper-V. Otherwise, SSH from the MacBook is used for most operations on the VMs.
 
-Ubuntu VMs are bootstrapped with cloud-init for common configuration, e.g., ssh keys, docker, tailscale. Each VM is assigned a static IP address from a dedicated subnet created in Unifi Network.
+Ubuntu VMs are bootstrapped with cloud-init for common configuration, e.g., ssh keys, docker, tailscale. Each VM is assigned a unique name and accessible via Tailscale.
 
 Upon VM creation, the magic DNS name from Tailscale is added to the inventory file and apply the ansible playbook to perform additional configuration.
 
 List of VMs:
 
-- Apps VM 01
+- Apps VM (`lab-vm-774e5d`)
   - k3s single-node cluster
   - Workloads are exposed via [Tailscale Kubernetes Operator](https://tailscale.com/kb/1236/kubernetes-operator)
-  - Runs most containerized workloads, e.g., Homebridge.
+  - Runs most containerized workloads, e.g., Homebridge
