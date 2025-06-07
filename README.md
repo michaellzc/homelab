@@ -17,7 +17,7 @@ For common operations, refer to the [handbook](./handbook/).
   - Intel NUC 12 NUC12WSHi5
     - Windows Server 2025 running multiple Ubuntu VMs using Hyper-V as hypervisor
     - Intel Core i5-1240P (4P + 8E)
-    - 2 x 4GB DDR4 RAM
+    - 2 x Crucial RAM 16GB DDR4-3200 SODIMMs
     - 1 x Transcend 430S 512GB M.2 SATA SSD (OS drive)
     - 1 x WD Black SN750 1TB M.2 NVMe SSD (Data drive)
 - Network
